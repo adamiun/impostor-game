@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <title>El Impostor</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; transition: background 0.5s; }
     h1 { color: #d32f2f; }
     input, button { padding: 8px; margin: 5px 0; }
     #listaJugadores li { margin: 3px 0; }
+    #tuRol { font-weight: bold; margin-top: 10px; font-size: 1.2em; display: none; text-align: center; padding: 20px; border-radius: 10px; color: white; }
   </style>
 </head>
 <body>
@@ -32,6 +33,9 @@
 
   <!-- Botón visible solo para host -->
   <button id="asignarRolesBtn" style="display:none;">Asignar roles</button>
+
+  <!-- Pantalla de rol privada -->
+  <p id="tuRol">Pendiente...</p>
 
   <!-- Conectar al archivo externo con la lógica -->
   <script type="module" src="app.js"></script>
