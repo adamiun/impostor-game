@@ -2,13 +2,52 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>El Impostor</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; transition: background 0.5s; }
-    h1 { color: #d32f2f; }
-    input, button { padding: 8px; margin: 5px 0; }
-    #listaJugadores li { margin: 3px 0; }
-    #tuRol { font-weight: bold; margin-top: 10px; font-size: 1.2em; display: none; text-align: center; padding: 20px; border-radius: 10px; color: white; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    h1 { 
+      color: #d32f2f;
+      text-align: center;
+      font-size: 2em;
+    }
+    input, button {
+      padding: 12px 15px;
+      margin: 8px 0;
+      font-size: 1em;
+      width: 80%;
+      max-width: 400px;
+    }
+    #listaJugadores li {
+      margin: 3px 0;
+      font-size: 1.1em;
+    }
+    #tuRol {
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 1.5em;
+      display: none;
+      text-align: center;
+      padding: 20px;
+      border-radius: 10px;
+      color: white;
+      width: 80%;
+      max-width: 400px;
+    }
+    #asignarRolesBtn {
+      font-size: 1.1em;
+      padding: 12px 20px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
