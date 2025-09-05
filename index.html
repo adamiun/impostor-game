@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>El Impostor</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { color: #d32f2f; }
+    input, button { padding: 8px; margin: 5px 0; }
+    #listaJugadores li { margin: 3px 0; }
+  </style>
 </head>
 <body>
   <h1>El Impostor 🔥</h1>
@@ -19,6 +25,13 @@
   <h3>🔑 Unirse a una sala</h3>
   <input type="text" id="codigoSala" placeholder="Código de sala">
   <button id="unirseSala">Unirse a sala</button>
+  <br><br>
+
+  <h3>Jugadores en la sala:</h3>
+  <ul id="listaJugadores"></ul>
+
+  <!-- Botón visible solo para host -->
+  <button id="asignarRolesBtn" style="display:none;">Asignar roles</button>
 
   <!-- Conectar al archivo externo con la lógica -->
   <script type="module" src="app.js"></script>

@@ -1,8 +1,8 @@
 // Importar Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-// Configuración de Firebase (la tuya)
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyB0uGD9OPVzPEZLBokRiCAlhvyJ9oaxF2Y",
   authDomain: "el-impostor-801.firebaseapp.com",
@@ -38,48 +38,53 @@ const unirseSalaBtn = document.getElementById("unirseSala");
 const nombreInput = document.getElementById("nombreJugador");
 const codigoInput = document.getElementById("codigoSala");
 const estado = document.getElementById("estado");
+const listaJugadores = document.getElementById("listaJugadores");
+const asignarRolesBtn = document.getElementById("asignarRolesBtn");
+
+let host = null;
+let codigoSalaActual = null;
+
+// Función para escuchar cambios en la lista de jugadores
+function escucharJugadores(codigo) {
+  const jugadoresRef = ref(db, `salas/${codigo}/jugadores`);
+  onValue(jugadoresRef, snapshot => {
+    listaJugadores.innerHTML = "";
+    if (snapshot.exists()) {
+      const jugadores = snapshot.val();
+      Object.keys(jugadores).forEach(j => {
+        const li = document.createElement("li");
+        li.textContent = jugadores[j].nombre;
+        listaJugadores.appendChild(li);
+      });
+    }
+  });
+}
 
 // Crear sala
 crearSalaBtn.addEventListener("click", async () => {
   const nombre = nombreInput.value;
-  if (!nombre) {
-    alert("Pon tu nombre");
-    return;
-  }
+  if (!nombre) { alert("Pon tu nombre"); return; }
 
   const codigo = Math.random().toString(36).substring(2, 7).toUpperCase();
+  codigoSalaActual = codigo;
+  host = nombre;
 
   await set(ref(db, "salas/" + codigo), {
-    jugadores: {
-      [nombre]: { nombre, rol: "Pendiente" }
-    },
+    host: nombre,
+    jugadores: { [nombre]: { nombre, rol: "Pendiente" } },
     estado: "esperando"
   });
 
   estado.innerText = `✅ Sala creada: ${codigo}`;
-});
 
-// Unirse a sala
-unirseSalaBtn.addEventListener("click", async () => {
-  const nombre = nombreInput.value;
-  const codigo = codigoInput.value.toUpperCase();
+  // Mostrar botón de asignar roles solo para host
+  asignarRolesBtn.style.display = "inline-block";
 
-  if (!nombre || !codigo) {
-    alert("Pon tu nombre y código de sala");
-    return;
-  }
+  escucharJugadores(codigo);
 
-  // Agregar jugador
-  await set(ref(db, `salas/${codigo}/jugadores/${nombre}`), {
-    nombre,
-    rol: "Pendiente"
-  });
-
-  estado.innerText = `🙌 Te uniste a la sala ${codigo}`;
-
-  // Escuchar cambios en el rol del jugador (cada uno solo ve el suyo)
+  // Escuchar cambios de tu propio rol
   const jugadorRef = ref(db, `salas/${codigo}/jugadores/${nombre}`);
-  onValue(jugadorRef, (snapshot) => {
+  onValue(jugadorRef, snapshot => {
     if (snapshot.exists()) {
       const datos = snapshot.val();
       if (datos.rol !== "Pendiente") {
@@ -87,31 +92,49 @@ unirseSalaBtn.addEventListener("click", async () => {
       }
     }
   });
+});
 
-  // Verificar si ya hay mínimo 4 jugadores
-  const snapshot = await get(child(ref(db), `salas/${codigo}/jugadores`));
+// Unirse a sala
+unirseSalaBtn.addEventListener("click", async () => {
+  const nombre = nombreInput.value;
+  const codigo = codigoInput.value.toUpperCase();
+  if (!nombre || !codigo) { alert("Pon tu nombre y código de sala"); return; }
+
+  codigoSalaActual = codigo;
+
+  await set(ref(db, `salas/${codigo}/jugadores/${nombre}`), { nombre, rol: "Pendiente" });
+
+  estado.innerText = `🙌 Te uniste a la sala ${codigo}`;
+
+  escucharJugadores(codigo);
+
+  // Escuchar cambios de tu propio rol
+  const jugadorRef = ref(db, `salas/${codigo}/jugadores/${nombre}`);
+  onValue(jugadorRef, snapshot => {
+    if (snapshot.exists()) {
+      const datos = snapshot.val();
+      if (datos.rol !== "Pendiente") {
+        estado.innerText = `🎭 Tu rol es: ${datos.rol}`;
+      }
+    }
+  });
+});
+
+// Asignar roles (solo host)
+asignarRolesBtn.addEventListener("click", async () => {
+  if (!host || !codigoSalaActual) return;
+
+  const snapshot = await get(ref(db, `salas/${codigoSalaActual}/jugadores`));
   if (snapshot.exists()) {
     const jugadores = Object.keys(snapshot.val());
-    if (jugadores.length >= 4) {
-      asignarRoles(codigo, jugadores);
+    const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
+    const famoso = famosos[Math.floor(Math.random() * famosos.length)];
+
+    for (let jugador of jugadores) {
+      await set(ref(db, `salas/${codigoSalaActual}/jugadores/${jugador}`), {
+        nombre: jugador,
+        rol: jugador === impostor ? "Impostor" : famoso
+      });
     }
   }
 });
-
-// Asignar roles: un impostor y el resto con un famoso
-async function asignarRoles(codigo, jugadores) {
-  // Elegir impostor
-  const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
-
-  // Elegir un famoso para todos
-  const famoso = famosos[Math.floor(Math.random() * famosos.length)];
-
-  // Guardar roles en Firebase
-  for (let jugador of jugadores) {
-    let rol = jugador === impostor ? "Impostor" : famoso;
-    await set(ref(db, `salas/${codigo}/jugadores/${jugador}`), {
-      nombre: jugador,
-      rol
-    });
-  }
-}
