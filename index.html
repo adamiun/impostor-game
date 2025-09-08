@@ -16,115 +16,39 @@
       align-items: center;
       min-height: 100vh;
     }
-
-    h1 { 
-      color: #d32f2f;
-      text-align: center;
-      font-size: 2.2em;
-      margin-bottom: 15px;
-    }
-
-    h3 {
-      margin-top: 25px;
-      font-size: 1.2em;
-      color: #333;
-    }
-
-    p#estado {
-      margin: 10px 0 20px;
-      font-weight: 500;
-      color: #444;
-    }
-
+    h1 { color: #d32f2f; text-align: center; font-size: 2.2em; margin-bottom: 15px; }
+    h3 { margin-top: 25px; font-size: 1.2em; color: #333; }
+    p#estado { margin: 10px 0 20px; font-weight: 500; color: #444; }
     input {
-      padding: 12px 15px;
-      margin: 8px 0;
-      font-size: 1em;
-      width: 90%;
-      max-width: 400px;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      outline: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 12px 15px; margin: 8px 0; font-size: 1em; width: 90%; max-width: 400px;
+      border: 1px solid #ccc; border-radius: 12px; outline: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       transition: 0.2s ease;
     }
-
-    input:focus {
-      border-color: #d32f2f;
-      box-shadow: 0 4px 8px rgba(211,47,47,0.2);
-    }
-
+    input:focus { border-color: #d32f2f; box-shadow: 0 4px 8px rgba(211,47,47,0.2); }
     button {
-      width: 90%;
-      max-width: 400px;
-      padding: 14px 20px;
-      margin: 10px 0;
-      font-size: 1.05em;
-      font-weight: 600;
-      border: none;
-      border-radius: 14px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 90%; max-width: 400px; padding: 14px 20px; margin: 10px 0;
+      font-size: 1.05em; font-weight: 600; border: none; border-radius: 14px; cursor: pointer;
+      transition: all 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    }
-
-    #crearSala {
-      background-color: #1976d2;
-      color: white;
-    }
-
-    #unirseSala {
-      background-color: #388e3c;
-      color: white;
-    }
-
-    #asignarRolesBtn {
-      background-color: #ff9800;
-      color: white;
-    }
-
+    button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    #crearSala { background-color: #1976d2; color: white; }
+    #unirseSala { background-color: #388e3c; color: white; }
+    #asignarRolesBtn { background-color: #ff9800; color: white; display:none; }
+    #iniciarVotacionBtn { background-color: #9c27b0; color: white; display:none; }
     #listaJugadores {
-      list-style: none;
-      padding: 0;
-      margin-top: 15px;
-      width: 90%;
-      max-width: 400px;
+      list-style: none; padding: 0; margin-top: 15px; width: 90%; max-width: 400px;
     }
-
     #listaJugadores li {
-      background: white;
-      padding: 10px 15px;
-      margin: 6px 0;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      font-size: 1.05em;
-      font-weight: 500;
-      text-align: center;
+      background: white; padding: 10px 15px; margin: 6px 0; border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08); font-size: 1.05em; font-weight: 500; text-align: center;
     }
-
     #tuRol {
-      font-weight: bold;
-      margin-top: 25px;
-      font-size: 1.4em;
-      display: none;
-      text-align: center;
-      padding: 18px;
-      border-radius: 14px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      animation: aparecer 0.6s ease forwards;
+      font-weight: bold; margin-top: 25px; font-size: 1.4em; display: none; text-align: center;
+      padding: 18px; border-radius: 14px; width: 90%; max-width: 400px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15); animation: aparecer 0.6s ease forwards;
     }
-
-    @keyframes aparecer {
-      from { opacity: 0; transform: scale(0.7); }
-      to { opacity: 1; transform: scale(1); }
-    }
+    #opcionesVotacion button { background-color: #444; color: white; }
+    @keyframes aparecer { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
   </style>
 </head>
 <body>
@@ -144,8 +68,12 @@
   <h3>👥 Jugadores en la sala:</h3>
   <ul id="listaJugadores"></ul>
 
-  <!-- Botón visible solo para host -->
-  <button id="asignarRolesBtn" style="display:none;">Asignar roles</button>
+  <!-- Botones de control -->
+  <button id="asignarRolesBtn">Asignar roles</button>
+  <button id="iniciarVotacionBtn">Iniciar votación</button>
+
+  <!-- Opciones de votación -->
+  <div id="opcionesVotacion"></div>
 
   <!-- Pantalla de rol privada -->
   <p id="tuRol">Pendiente...</p>

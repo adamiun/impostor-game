@@ -1,6 +1,6 @@
 // Importar Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -18,18 +18,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Lista de 50 famosos
+// Lista de famosos
 const famosos = [
-  "Brad Pitt", "Angelina Jolie", "Tom Cruise", "Scarlett Johansson", "Leonardo DiCaprio",
-  "Shakira", "Rihanna", "Beyoncé", "Michael Jordan", "Cristiano Ronaldo",
-  "Messi", "Dua Lipa", "Billie Eilish", "Katy Perry", "Jennifer Lopez",
-  "Will Smith", "Johnny Depp", "Robert Downey Jr.", "Chris Hemsworth", "Mark Zuckerberg",
-  "Elon Musk", "Jeff Bezos", "Taylor Swift", "Kanye West", "Adele",
-  "Emma Watson", "Daniel Radcliffe", "Rupert Grint", "Selena Gomez", "Miley Cyrus",
-  "Harry Styles", "Zayn Malik", "Justin Bieber", "Lady Gaga", "Ed Sheeran",
-  "Post Malone", "Drake", "Eminem", "Ariana Grande", "Kim Kardashian",
-  "Kylie Jenner", "Zendaya", "Timothée Chalamet", "Gal Gadot", "Keanu Reeves",
-  "Vin Diesel", "Dwayne Johnson", "Jason Momoa", "Chris Evans", "Natalie Portman"
+  "Brad Pitt","Angelina Jolie","Tom Cruise","Scarlett Johansson","Leonardo DiCaprio",
+  "Shakira","Rihanna","Beyoncé","Michael Jordan","Cristiano Ronaldo",
+  "Messi","Dua Lipa","Billie Eilish","Katy Perry","Jennifer Lopez",
+  "Will Smith","Johnny Depp","Robert Downey Jr.","Chris Hemsworth","Mark Zuckerberg",
+  "Elon Musk","Jeff Bezos","Taylor Swift","Kanye West","Adele",
+  "Emma Watson","Daniel Radcliffe","Rupert Grint","Selena Gomez","Miley Cyrus",
+  "Harry Styles","Zayn Malik","Justin Bieber","Lady Gaga","Ed Sheeran",
+  "Post Malone","Drake","Eminem","Ariana Grande","Kim Kardashian",
+  "Kylie Jenner","Zendaya","Timothée Chalamet","Gal Gadot","Keanu Reeves",
+  "Vin Diesel","Dwayne Johnson","Jason Momoa","Chris Evans","Natalie Portman"
 ];
 
 // Referencias a elementos del HTML
@@ -40,12 +40,17 @@ const codigoInput = document.getElementById("codigoSala");
 const estado = document.getElementById("estado");
 const listaJugadores = document.getElementById("listaJugadores");
 const asignarRolesBtn = document.getElementById("asignarRolesBtn");
+const iniciarVotacionBtn = document.getElementById("iniciarVotacionBtn");
+const opcionesVotacion = document.getElementById("opcionesVotacion");
 const tuRol = document.getElementById("tuRol");
 
 let host = null;
 let codigoSalaActual = null;
+let miNombre = null;
 
-// Función para mostrar lista de jugadores en tiempo real
+// ---------------------- FUNCIONES ----------------------
+
+// Mostrar jugadores en tiempo real
 function escucharJugadores(codigo) {
   const jugadoresRef = ref(db, `salas/${codigo}/jugadores`);
   onValue(jugadoresRef, snapshot => {
@@ -54,15 +59,17 @@ function escucharJugadores(codigo) {
       const jugadores = snapshot.val();
       Object.keys(jugadores).forEach(j => {
         const li = document.createElement("li");
-        li.textContent = jugadores[j].nombre;
-        li.style.fontSize = "1.1em"; // Ajuste visual para móviles
+        const jugador = jugadores[j];
+        li.textContent = jugador.nombre + (jugador.estado === "eliminado" ? " ☠️" : "");
+        li.style.fontSize = "1.1em";
+        li.style.opacity = jugador.estado === "eliminado" ? "0.5" : "1";
         listaJugadores.appendChild(li);
       });
     }
   });
 }
 
-// Función para escuchar el rol privado con animación y color
+// Escuchar rol privado
 function escucharRolPrivado(nombre, codigo) {
   const jugadorRef = ref(db, `salas/${codigo}/jugadores/${nombre}`);
   onValue(jugadorRef, snapshot => {
@@ -71,30 +78,94 @@ function escucharRolPrivado(nombre, codigo) {
       if(datos.rol !== "Pendiente"){
         tuRol.innerText = `🎭 Tu rol es: ${datos.rol}`;
         tuRol.style.display = "block";
-
-        // Colores y estilo
         tuRol.style.backgroundColor = datos.rol === "Impostor" ? "red" : "green";
         tuRol.style.color = "white";
-        tuRol.style.padding = "20px";
-        tuRol.style.borderRadius = "10px";
-        tuRol.style.textAlign = "center";
-        tuRol.style.fontWeight = "bold";
-        tuRol.style.fontSize = "1.5em";
-        tuRol.style.width = "80%";
-        tuRol.style.maxWidth = "400px";
-
-        // Animación
-        tuRol.style.opacity = 0;
-        tuRol.style.transform = "scale(0.5)";
-        tuRol.style.transition = "all 0.5s ease";
-        setTimeout(() => {
-          tuRol.style.opacity = 1;
-          tuRol.style.transform = "scale(1)";
-        }, 50);
       }
     }
   });
 }
+
+// Escuchar fase de juego
+function escucharFase(codigo) {
+  const faseRef = ref(db, `salas/${codigo}/fase`);
+  onValue(faseRef, snapshot => {
+    if(snapshot.exists()){
+      const fase = snapshot.val();
+      if(fase === "votacion"){
+        mostrarOpcionesVotacion();
+      } else {
+        opcionesVotacion.innerHTML = "";
+      }
+    }
+  });
+}
+
+// Mostrar opciones de votación
+function mostrarOpcionesVotacion() {
+  const jugadoresRef = ref(db, `salas/${codigoSalaActual}/jugadores`);
+  get(jugadoresRef).then(snapshot => {
+    if(snapshot.exists()){
+      const jugadores = snapshot.val();
+      opcionesVotacion.innerHTML = "<h3>Vota por alguien:</h3>";
+      Object.keys(jugadores).forEach(j => {
+        const jugador = jugadores[j];
+        if(jugador.estado === "vivo" && jugador.nombre !== miNombre){
+          const btn = document.createElement("button");
+          btn.textContent = `Votar por ${jugador.nombre}`;
+          btn.onclick = () => emitirVoto(jugador.nombre);
+          opcionesVotacion.appendChild(btn);
+        }
+      });
+    }
+  });
+}
+
+// Emitir voto
+function emitirVoto(votado) {
+  update(ref(db, `salas/${codigoSalaActual}/votos/${miNombre}`), votado);
+}
+
+// Contar votos y mostrar resultado
+async function contarVotos() {
+  const votosSnap = await get(ref(db, `salas/${codigoSalaActual}/votos`));
+  const jugadoresSnap = await get(ref(db, `salas/${codigoSalaActual}/jugadores`));
+
+  if(votosSnap.exists() && jugadoresSnap.exists()){
+    const votos = votosSnap.val();
+    const jugadores = jugadoresSnap.val();
+
+    // Contar
+    let conteo = {};
+    Object.values(votos).forEach(v => {
+      conteo[v] = (conteo[v] || 0) + 1;
+    });
+
+    // Encontrar más votado
+    let eliminado = null;
+    let max = 0;
+    Object.keys(conteo).forEach(nombre => {
+      if(conteo[nombre] > max){
+        max = conteo[nombre];
+        eliminado = nombre;
+      }
+    });
+
+    if(eliminado){
+      // Actualizar estado del jugador eliminado
+      await update(ref(db, `salas/${codigoSalaActual}/jugadores/${eliminado}`), { estado: "eliminado" });
+
+      if(jugadores[eliminado].rol === "Impostor"){
+        alert("🎉 Juego terminado: han eliminado al impostor");
+      } else {
+        alert("⚠️ Mataron a un inocente, sigue otra ronda");
+        // Reiniciar fase
+        await update(ref(db, `salas/${codigoSalaActual}`), { fase: "esperando", votos: null });
+      }
+    }
+  }
+}
+
+// ---------------------- EVENTOS ----------------------
 
 // Crear sala
 crearSalaBtn.addEventListener("click", async () => {
@@ -103,19 +174,23 @@ crearSalaBtn.addEventListener("click", async () => {
 
   const codigo = Math.random().toString(36).substring(2,7).toUpperCase();
   codigoSalaActual = codigo;
+  miNombre = nombre;
   host = nombre;
 
   await set(ref(db, `salas/${codigo}`), {
     host: nombre,
-    jugadores: { [nombre]: { nombre, rol: "Pendiente" } },
-    estado: "esperando"
+    jugadores: { [nombre]: { nombre, rol: "Pendiente", estado: "vivo" } },
+    estado: "jugando",
+    fase: "esperando"
   });
 
   estado.innerText = `✅ Sala creada: ${codigo}`;
   asignarRolesBtn.style.display = "inline-block";
+  iniciarVotacionBtn.style.display = "inline-block";
 
   escucharJugadores(codigo);
   escucharRolPrivado(nombre, codigo);
+  escucharFase(codigo);
 });
 
 // Unirse a sala
@@ -125,13 +200,15 @@ unirseSalaBtn.addEventListener("click", async () => {
   if(!nombre || !codigo){ alert("Pon tu nombre y código de sala"); return; }
 
   codigoSalaActual = codigo;
+  miNombre = nombre;
 
-  await set(ref(db, `salas/${codigo}/jugadores/${nombre}`), { nombre, rol: "Pendiente" });
+  await set(ref(db, `salas/${codigo}/jugadores/${nombre}`), { nombre, rol: "Pendiente", estado: "vivo" });
 
   estado.innerText = `🙌 Te uniste a la sala ${codigo}`;
 
   escucharJugadores(codigo);
   escucharRolPrivado(nombre, codigo);
+  escucharFase(codigo);
 });
 
 // Asignar roles (solo host)
@@ -145,10 +222,16 @@ asignarRolesBtn.addEventListener("click", async () => {
     const famoso = famosos[Math.floor(Math.random()*famosos.length)];
 
     for(let jugador of jugadores){
-      await set(ref(db, `salas/${codigoSalaActual}/jugadores/${jugador}`), {
-        nombre: jugador,
-        rol: jugador === impostor ? "Impostor" : famoso
+      await update(ref(db, `salas/${codigoSalaActual}/jugadores/${jugador}`), {
+        rol: jugador === impostor ? "Impostor" : famoso,
+        estado: "vivo"
       });
     }
   }
+});
+
+// Iniciar votación (host)
+iniciarVotacionBtn.addEventListener("click", async () => {
+  await update(ref(db, `salas/${codigoSalaActual}`), { fase: "votacion", votos: {} });
+  setTimeout(contarVotos, 15000); // 15 seg para votar
 });
