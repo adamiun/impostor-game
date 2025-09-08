@@ -79,7 +79,7 @@ function escucharRolPrivado(nombre, codigo) {
   });
 }
 
-// Escuchar estado de votación
+// Escuchar estado de votación y anuncios
 function escucharVotacion(codigo) {
   const salaRef = ref(db, `salas/${codigo}`);
   onValue(salaRef, snapshot => {
@@ -95,6 +95,11 @@ function escucharVotacion(codigo) {
         anuncio.style.display = "block";
         anuncio.innerText = datos.anuncio;
         anuncio.style.background = datos.anuncio.includes("impostor") ? "green" : "red";
+
+        // Si terminó una ronda y no fue el impostor, permitir nueva votación al host
+        if(host === nombreJugador && datos.estado === "esperando"){
+          iniciarVotacionBtn.style.display = "inline-block";
+        }
       } else {
         anuncio.style.display = "none";
       }
@@ -168,6 +173,7 @@ asignarRolesBtn.addEventListener("click", async () => {
 iniciarVotacionBtn.addEventListener("click", async () => {
   if(!host || !codigoSalaActual) return;
   await update(ref(db, `salas/${codigoSalaActual}`), { estado: "votacion", votos: {}, anuncio: null });
+  iniciarVotacionBtn.style.display = "none";
 });
 
 // Votar
@@ -176,7 +182,8 @@ votarBtn.addEventListener("click", async () => {
   const elegido = selectVoto.value;
   await update(ref(db, `salas/${codigoSalaActual}/votos/${nombreJugador}`), { voto: elegido });
 
-  estado.innerText = `✅ Votaste por ${elegido}`;
+  // Feedback inmediato al jugador
+  estado.innerText = `🗳️ Has votado por ${elegido}. Esperando a los demás...`;
 });
 
 // Recuento de votos (host)
