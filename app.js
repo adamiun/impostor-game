@@ -55,6 +55,7 @@ function escucharJugadores(codigo) {
       Object.keys(jugadores).forEach(j => {
         const li = document.createElement("li");
         li.textContent = jugadores[j].nombre;
+        li.style.fontSize = "1.1em"; // Ajuste visual para móviles
         listaJugadores.appendChild(li);
       });
     }
@@ -78,7 +79,9 @@ function escucharRolPrivado(nombre, codigo) {
         tuRol.style.borderRadius = "10px";
         tuRol.style.textAlign = "center";
         tuRol.style.fontWeight = "bold";
-        tuRol.style.fontSize = "1.3em";
+        tuRol.style.fontSize = "1.5em";
+        tuRol.style.width = "80%";
+        tuRol.style.maxWidth = "400px";
 
         // Animación
         tuRol.style.opacity = 0;
